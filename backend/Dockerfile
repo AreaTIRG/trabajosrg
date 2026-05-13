@@ -40,6 +40,31 @@ COPY --chown=appuser:appuser ./app ./app
 # Create uploads directory and set permissions
 RUN mkdir -p /app/uploads && chown -R appuser:appuser /app
 
+# Create startup script
+RUN cat > /app/start.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# Initialize database with single worker first to avoid race conditions
+echo "Initializing database..."
+python -c "
+import asyncio
+from app.database import init_db
+
+async def init():
+    await init_db()
+    print('Database initialization complete')
+
+asyncio.run(init())
+"
+
+# Start uvicorn with multiple workers
+echo "Starting uvicorn with 4 workers..."
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+EOF
+
+RUN chmod +x /app/start.sh
+
 # Switch to non-root user
 USER appuser
 
@@ -51,4 +76,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" 2>/dev/null || exit 1
 
 # Run application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["/app/start.sh"]

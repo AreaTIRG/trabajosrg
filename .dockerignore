@@ -1,0 +1,80 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+puestos.db
+
+# Uploads (except .gitkeep)
+uploads/*
+!uploads/.gitkeep
+
+# Backups
+backups/*
+!backups/.gitkeep
+*.sql
+*.tar.gz
+*.zip
+backup*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
+docker-compose*.yml
+Dockerfile*
+
+# Frontend build (se construye en multi-stage)
+frontend/node_modules/
+frontend/dist/
+
+# Documentation
+README.md
+DEPLOY.md
+docs/
+
+# Tests
+tests/
+*_test.py
+.pytest_cache/
+
+# Misc
+deploy.sh
+deploy.ps1

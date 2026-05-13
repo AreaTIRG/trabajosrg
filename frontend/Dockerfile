@@ -20,28 +20,30 @@ FROM nginx:1.25-alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Create nginx directories with proper permissions for the nginx user
+# Remove default nginx configuration
+RUN rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/*
+
+# Create nginx directories with proper permissions
 RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi \
-    && chown -R nginx:nginx /var/lib/nginx \
-    && chmod 755 /var/lib/nginx \
-    && chmod 755 /var/lib/nginx/body
+    /var/cache/nginx /var/run \
+    && chown -R nginx:nginx /var/lib/nginx /var/cache/nginx /var/run
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built files from build stage
+# Remove default nginx html files and copy built files
+RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create non-root user (optional, for better security)
-# RUN addgroup -g 1001 -S nginx && \
-#     adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD curl -f http://localhost/health || exit 1
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
