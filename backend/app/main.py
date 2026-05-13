@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.database import init_db, async_session_factory
 from app.models.admin_user import AdminUser
@@ -22,15 +23,27 @@ async def lifespan(app: FastAPI):
 
 async def seed_admin():
     async with async_session_factory() as session:
-        result = await session.execute(select(AdminUser).limit(1))
-        if not result.scalar_one_or_none():
+        # Check if admin with this email already exists
+        result = await session.execute(
+            select(AdminUser).where(AdminUser.email == settings.ADMIN_EMAIL)
+        )
+        existing_admin = result.scalar_one_or_none()
+        
+        if not existing_admin:
             admin = AdminUser(
                 email=settings.ADMIN_EMAIL,
                 name=settings.ADMIN_NAME,
                 hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
             )
             session.add(admin)
-            await session.commit()
+            try:
+                await session.commit()
+                print(f"Admin user '{settings.ADMIN_EMAIL}' created successfully")
+            except IntegrityError:
+                await session.rollback()
+                print(f"Admin user '{settings.ADMIN_EMAIL}' already exists (concurrent creation)")
+        else:
+            print(f"Admin user '{settings.ADMIN_EMAIL}' already exists")
 
 
 app = FastAPI(title="Puestos API", lifespan=lifespan)
