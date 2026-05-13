@@ -61,8 +61,15 @@ WORKDIR /app
 # Copy backend code
 COPY --chown=appuser:appuser backend/app ./app
 
-# Create uploads directory
-RUN mkdir -p /app/uploads && chown -R appuser:appuser /app
+# Create uploads directory and nginx directories with proper permissions
+RUN mkdir -p /app/uploads && chown -R appuser:appuser /app && \
+    mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi && \
+    chown -R www-data:www-data /var/lib/nginx && \
+    chmod 755 /var/lib/nginx && \
+    chmod 755 /var/lib/nginx/body && \
+    mkdir -p /var/log/nginx && chown -R www-data:www-data /var/log/nginx && \
+    mkdir -p /var/run && chown -R www-data:www-data /var/run && \
+    touch /var/run/nginx.pid && chown www-data:www-data /var/run/nginx.pid
 
 # Copy built frontend to nginx html directory
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
@@ -143,11 +150,14 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
+# Ensure nginx directories have correct permissions
+chown -R www-data:www-data /var/lib/nginx /var/log/nginx /var/run/nginx.pid 2>/dev/null || true
+
 # Start nginx in background
 nginx
 
-# Start backend with uvicorn in background
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 &
+# Start backend with uvicorn as appuser
+su -s /bin/bash -c "cd /app && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4" appuser &
 backend_pid=$!
 
 # Wait for backend process
@@ -156,8 +166,8 @@ EOF
 
 RUN chmod +x /app/start.sh
 
-# Switch to non-root user
-USER appuser
+# Note: Running as root is required for nginx to bind to port 80
+# The backend runs as appuser via the start script
 
 # Expose ports
 EXPOSE 80 8000

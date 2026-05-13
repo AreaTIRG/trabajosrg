@@ -20,6 +20,12 @@ FROM nginx:1.25-alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
+# Create nginx directories with proper permissions for the nginx user
+RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi \
+    && chown -R nginx:nginx /var/lib/nginx \
+    && chmod 755 /var/lib/nginx \
+    && chmod 755 /var/lib/nginx/body
+
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
