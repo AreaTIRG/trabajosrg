@@ -46,6 +46,10 @@ app.add_middleware(
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "puestos-api"}
+
 app.include_router(public.router)
 app.include_router(auth.router)
 app.include_router(admin.router)

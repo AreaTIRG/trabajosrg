@@ -1,0 +1,41 @@
+# ==========================================
+# Docker Compose Override para Desarrollo
+# ==========================================
+# Este archivo extiende docker-compose.yml con
+# configuraciones específicas para desarrollo
+# 
+# Uso: docker-compose up -d
+# Docker Compose cargará automáticamente este archivo
+# junto con docker-compose.yml
+# ==========================================
+
+version: '3.8'
+
+services:
+  backend:
+    # En desarrollo, montamos el código fuente para hot-reload
+    volumes:
+      - ./backend/app:/app/app:ro
+      - uploads:/app/uploads
+    # Deshabilitar healthcheck en desarrollo para debugging
+    # healthcheck:
+    #   disable: true
+    environment:
+      # Habilitar modo debug
+      DEBUG: "true"
+      # Recargar automáticamente en cambios
+      UVICORN_RELOAD: "true"
+    # Sobrescribir comando para desarrollo con hot-reload
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # frontend:
+    # En desarrollo, podrías usar el servidor de desarrollo de Vite
+    # Descomenta las siguientes líneas si prefieres usar Vite dev server
+    # build:
+    #   dockerfile: Dockerfile.dev
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
+    # ports:
+    #   - "5173:5173"
+    # command: ["npm", "run", "dev", "--", "--host"]

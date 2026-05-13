@@ -1,6 +1,52 @@
-node_modules/
-.expo/
-dist/
-*.log
+# Environment
 .env
 .env.local
+.env.*.local
+!.env.example
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+puestos.db
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Backups
+*.sql
+*.tar.gz
+*.zip
+backup*
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
